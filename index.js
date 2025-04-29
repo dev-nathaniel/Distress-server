@@ -22,12 +22,16 @@ app.post('/deploy', (request, response) => {
     // board.on("ready", () => {
         const led = new Led(13); // Built-in LED on pin 13
 
+        let blinkCount = 0;
         function blink() {
-            led.on();
-            setTimeout(() => {
-                led.off();
-                setTimeout(blink, 100); // 1 sec off
-            }, 500); // 5 sec on
+            if (blinkCount < 10) {
+                led.on();
+                setTimeout(() => {
+                    led.off();
+                    setTimeout(blink, 100); // 1 sec off
+                    blinkCount++;
+                }, 500); // 5 sec on
+            }
         }
 
         blink();
