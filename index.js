@@ -15,6 +15,7 @@ dotenv.config();
 export const client = new Twilio(process.env.accountSid, process.env.authToken);
 // import jf from "johnny-five";
 import cors from 'cors'
+import { verifyTokenAndRole } from "./src/routes/users.js";
 
 const app = express()
 
@@ -66,7 +67,7 @@ mttqClient.on("connect", () => {
 
         // blink();
     // });
-app.post('/deploy', async (request, response) => {
+app.post('/deploy', verifyTokenAndRole('admin'), async (request, response) => {
     const topic = `${IO_USERNAME}/feeds/deployDrone`;
     const message = 'Deploy Drone!';
     mttqClient.publish(topic, message, async () => {
