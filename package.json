@@ -20,9 +20,12 @@
     "express-validator": "^7.2.1",
     "johnny-five": "^2.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.16.0",
     "mongoose": "^8.13.2",
+    "mqtt": "^5.13.0",
     "nodemailer": "^6.10.1",
-    "serialport": "^13.0.0"
+    "serialport": "^13.0.0",
+    "twilio": "^5.6.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
