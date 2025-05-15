@@ -60,7 +60,7 @@ Escalate distress to admin: `,
 // Get all distress alerts (admin only)
 router.get('/', verifyTokenAndRole('admin'), async (request, response) => {
     try {
-        const alerts = await Distress.find();
+        const alerts = await Distress.find().populate('user');
         response.json(alerts);
     } catch (error) {
         response.status(500).json({ message: error.message });
