@@ -16,7 +16,7 @@ router.post('/', verifyTokenAndRole(), async (request, response) => {
             additionalDetails: [request.body.additionalDetails] // Wrap the object in an array
         });
         const newAlert = await distressAlert.save();
-        const { batteryLevel, phoneStatus, timeAdded } = distressAlert.additionalDetails[0];
+        // const { batteryLevel, phoneStatus, timeAdded } = distressAlert.additionalDetails[0];
     // {"coords": {"accuracy": 5, "altitude": 79.51784883765079, "altitudeAccuracy": 30, "heading": -1, "latitude": 52.6296181498343, "longitude": -1.1209546978503624, "speed": -1}, "timestamp": 1747147173648.2593}
     // try {
         const latestLocation = distressAlert.location[0]; // Access the latest location
