@@ -58,7 +58,7 @@ const distressSchema = new mongoose.Schema({
             },
             phoneStatus: {
                 type: String,
-                required: true
+                // required: true
             }
         }],
         required: true
