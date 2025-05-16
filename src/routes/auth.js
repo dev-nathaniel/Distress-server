@@ -88,4 +88,23 @@ router.post('/register', async (request, response) => {
     }
 });
 
+// Endpoint to confirm if token is still valid
+router.get('/token/validate', async (request, response) => {
+    try {
+        const token = request.headers['authorization'].split(' ')[1];
+        if (!token) {
+            return response.status(401).json({ message: "No token provided" });
+        }
+
+        jwt.verify(token, getJwtSecret(), (error, decoded) => {
+            if (error) {
+                return response.status(401).json({ message: "Invalid token" });
+            }
+            response.json({ message: "Token is valid", decoded });
+        });
+    } catch (error) {
+        response.status(500).json({ message: error.message });
+    }
+});
+
 export default router;
