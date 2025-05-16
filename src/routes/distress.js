@@ -3,6 +3,7 @@ import Distress from "../models/Distress.js"; // Corrected to use the Distress m
 import { verifyTokenAndRole } from './users.js'; // Reusing the middleware for authentication
 import { client } from "../../index.js";
 import User from "../models/User.js";
+import axios from "axios";
 
 const router = Router();
 
@@ -30,6 +31,8 @@ router.post('/', verifyTokenAndRole(), async (request, response) => {
             return response.status(404).json({ message: "User not found" });
         }
 
+        // const shortenedUrl = await axios.post('https://spoo.me', {url: '', alias: '', password: ''})
+
         // Send messages to all emergency contacts
         const sendMessages = user.emergencyContacts.map(contact => {
             return client.messages.create({
@@ -38,10 +41,9 @@ router.post('/', verifyTokenAndRole(), async (request, response) => {
 🔗 Additional Details:
 Time Sent: ${distressAlert.additionalDetails[0].timeAdded.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric', year: 'numeric' })}
 Battery Level: ${Number(distressAlert.additionalDetails[0].batteryLevel).toFixed(0)}%
-Phone Status: Silent Mode
 If you are nearby or can assist, please contact her or the authorities immediately! 🚑🚓
 Stay safe and act quickly.
-Escalate distress to admin: `,
+Escalate distress to admin: https://distress.netlify.app?id=${distressAlert._id}`,
                 from: process.env.TWILIO_PHONE_NUMBER,
                 to: contact.phoneNumbers[0].digits // Assuming the first phone number is the primary contact
             });

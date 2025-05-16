@@ -35,6 +35,31 @@ router.post('/login', async (request, response) => {
     }
 });
 
+// Admin login
+router.post('/admin/login', async (request, response) => {
+    try {
+        const { email, password } = request.body;
+        const user = await User.findOne({ email });
+        if (!user) {
+            return response.status(404).json({ message: "User not found" });
+        }
+
+        if (user.role !== 'admin') {
+            return response.status(403).json({ message: "Access denied. This is an admin-only feature." });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return response.status(401).json({ message: "Invalid password" });
+        }
+
+        const token = jwt.sign({ id: user._id, role: user.role }, getJwtSecret(), { expiresIn: '3h' });
+        response.json({ token });
+    } catch (error) {
+        response.status(500).json({ message: error.message });
+    }
+});
+
 // User registration
 router.post('/register', async (request, response) => {
     try {
