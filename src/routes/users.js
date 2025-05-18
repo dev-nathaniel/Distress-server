@@ -68,8 +68,10 @@ router.get('/:id/emergencyContacts', verifyTokenAndRole(), async (request, respo
         if (!user) return response.status(404).json({ message: "User not found" });
         if (user.emergencyContacts && user.emergencyContacts.length > 0) {
             response.json({ hasEmergencyContacts: true });
+            console.log(user.emergencyContacts)
         } else {
             response.json({ hasEmergencyContacts: false });
+            console.log(user.emergencyContacts)
         }
     } catch (error) {
         response.status(500).json({ message: error.message });
