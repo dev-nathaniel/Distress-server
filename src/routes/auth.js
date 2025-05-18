@@ -29,7 +29,7 @@ router.post('/login', async (request, response) => {
         }
 
         const token = jwt.sign({ id: user._id, role: user.role }, getJwtSecret(), { expiresIn: '3h' });
-        response.json({ token });
+        response.json({ id: user._id, token });
     } catch (error) {
         response.status(500).json({ message: error.message });
     }
@@ -82,7 +82,7 @@ router.post('/register', async (request, response) => {
         const newUser = await user.save();
         const token = jwt.sign({ id: newUser._id, role: newUser.role }, getJwtSecret(), { expiresIn: '1h' });
         const {password: userPassword, __v, updatedAt, ...restOfUser} = newUser._doc
-        response.status(201).json({ user: restOfUser, token });
+        response.status(201).json({ id: newUser._id, token });
     } catch (error) {
         response.status(400).json({ message: error.message });
     }
