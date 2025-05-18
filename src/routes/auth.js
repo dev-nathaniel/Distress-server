@@ -107,4 +107,25 @@ router.get('/token/validate', async (request, response) => {
     }
 });
 
+// Endpoint to refresh token with no expiry time
+router.post('/token/refresh', async (request, response) => {
+    try {
+        const { token } = request.body;
+        if (!token) {
+            return response.status(401).json({ message: "No token provided" });
+        }
+
+        jwt.verify(token, getJwtSecret(), (error, decoded) => {
+            if (error) {
+                return response.status(401).json({ message: "Invalid token" });
+            }
+
+            const newToken = jwt.sign({ id: decoded.id, role: decoded.role }, getJwtSecret());
+            response.json({ token: newToken });
+        });
+    } catch (error) {
+        response.status(500).json({ message: error.message });
+    }
+});
+
 export default router;
