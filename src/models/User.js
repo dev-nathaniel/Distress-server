@@ -30,17 +30,16 @@ const userSchema = new mongoose.Schema({
     },
     emergencyContacts: {
         type: [{
-            name: { type: String, required: true },
-            firstName: { type: String, required: true },
-            lastName: { type: String, required: true },
+            name: { type: String },
+            firstName: { type: String },
+            lastName: { type: String },
             emails: [{
                 type: String,
-                required: true
             }],
             phoneNumbers: [{
-                number: { type: String, required: true },
-                digits: { type: String, required: true },
-                countryCode: { type: String, required: true }
+                number: { type: String },
+                digits: { type: String },
+                countryCode: { type: String }
             }]
         }],
         required: false

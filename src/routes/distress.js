@@ -45,7 +45,7 @@ If you are nearby or can assist, please contact her or the authorities immediate
 Stay safe and act quickly.
 Escalate distress to admin: https://distress.netlify.app?id=${distressAlert._id}`,
                 from: process.env.TWILIO_PHONE_NUMBER,
-                to: contact.phoneNumbers[0].digits // Assuming the first phone number is the primary contact
+                to: contact.phoneNumbers[0].digits ?? contact.phoneNumbers[0].number // Assuming the first phone number is the primary contact
             });
         });
 

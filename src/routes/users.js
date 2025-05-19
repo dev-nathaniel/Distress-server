@@ -125,7 +125,17 @@ router.put('/:id', verifyTokenAndRole(), async (request, response) => {
             user.homeAddress = request.body.homeAddress;
         }
         if (request.body.emergencyContacts != null) {
-            user.emergencyContacts = request.body.emergencyContacts;
+            user.emergencyContacts = request.body.emergencyContacts.map(contact => {
+                if (!contact.name && !contact.firstName && !contact.lastName) {
+                    return response.status(400).json({ message: "At least one of name, firstName, or lastName must be present for each emergency contact" });
+                }
+                contact.phoneNumbers.forEach(phone => {
+                    if (!phone.digits && !phone.number) {
+                        return response.status(400).json({ message: "At least one of digits or number must be present for each phone number" });
+                    }
+                });
+                return contact;
+            });
         }
         if (request.body.role != null && request.userRole === 'admin') {
             user.role = request.body.role;
