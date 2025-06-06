@@ -34,7 +34,8 @@ const distressSchema = new mongoose.Schema({
                     phoneNumber: { type: String, default: null }
                 },
                 default: { email: null, phoneNumber: null }
-            }
+            },
+            additionalInfo: {type: String}
         },
         default: { status: false, by: null }
     },
@@ -62,6 +63,9 @@ const distressSchema = new mongoose.Schema({
             }
         }],
         required: true
+    },
+    audioRecordings: {
+        type: [{url: String, timeAdded: {type:Date, default: Date.now}}]
     },
     createdAt: {
         type: Date,

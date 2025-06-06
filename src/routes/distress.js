@@ -62,7 +62,7 @@ Escalate distress to admin: https://distress.netlify.app?id=${distressAlert._id}
 // Get all distress alerts (admin only)
 router.get('/', verifyTokenAndRole('admin'), async (request, response) => {
     try {
-        const alerts = await Distress.find().populate('user');
+        const alerts = await Distress.find().populate('user').sort({ createdAt: -1 });
         response.json(alerts);
     } catch (error) {
         response.status(500).json({ message: error.message });
@@ -166,6 +166,10 @@ router.post('/escalate/:id', async (request, response) => {
         if (phoneNumber) {
             alert.escalated.by.phoneNumber = phoneNumber;
         }
+        if (request.body.additionalInfo) {
+            alert.escalated.additionalInfo = request.body.additionalInfo;
+        }
+        
         const updatedAlert = await alert.save();
         response.json(updatedAlert);
     } catch (error) {
