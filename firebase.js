@@ -8,7 +8,7 @@ import { getStorage } from "firebase/storage";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyD7mDOc2zEhtGyryEluHiTbqGrolBMnxQM",
+  apiKey: process.env.FIREBASE_KEY,
   authDomain: "distress-2b3cd.firebaseapp.com",
   databaseURL: "https://distress-2b3cd-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "distress-2b3cd",
