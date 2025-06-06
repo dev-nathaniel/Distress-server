@@ -80,7 +80,7 @@ io.use((socket, next) => {
     if (!token) return next(new Error("No Token provided"));
 
     jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
-        console.log(error)
+        // console.log(error)
         if (error) return next( new Error( "Failed to authenticate token" ));
         const user = {id: decoded.id,
         // console.log(decoded.id, 'decoded')
@@ -93,7 +93,7 @@ io.use((socket, next) => {
 })
 
 io.on('connection', (socket) => {
-    console.log(socket.id)
+    console.log(socket.id, 'socket id')
     socket.on('audio', (chunk) => {
         // console.log(chunk)
         if (audioChunks.length < 10) {

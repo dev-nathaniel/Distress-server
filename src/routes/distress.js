@@ -155,6 +155,8 @@ router.delete('/:id', verifyTokenAndRole(), async (request, response) => {
 router.post('/escalate/:id', async (request, response) => {
     try {
         const { email, phoneNumber } = request.body;
+        console.log(email, 'email')
+        console.log(phoneNumber, 'phone')
         const alert = await Distress.findById(request.params.id)
 
         if (!alert) return response.status(404).json({ message: "Distress alert not found" });
@@ -173,6 +175,8 @@ router.post('/escalate/:id', async (request, response) => {
         const updatedAlert = await alert.save();
         response.json(updatedAlert);
     } catch (error) {
+        console.log(error, 'escalation error')
+        console.log(error.message)
         response.status(400).json({ message: error.message });
     }
 });
