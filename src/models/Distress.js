@@ -33,11 +33,9 @@ const distressSchema = new mongoose.Schema({
                     email: { type: String },
                     phoneNumber: { type: String }
                 },
-                default: { email: null, phoneNumber: null }
             },
             additionalInfo: {type: String}
         },
-        default: { status: false, by: null }
     },
     droneDeployed: {
         type: Boolean,
