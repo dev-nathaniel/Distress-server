@@ -161,13 +161,19 @@ router.post('/escalate/:id', async (request, response) => {
 
         if (!alert) return response.status(404).json({ message: "Distress alert not found" });
 
+        const by = {
+            email,
+            phoneNumber
+        }
         alert.escalated.status = true;
         if (email) {
-            alert.escalated.by.email = email;
+            by.email = email;
         } 
         if (phoneNumber) {
-            alert.escalated.by.phoneNumber = phoneNumber;
+            by.phoneNumber = phoneNumber;
         }
+
+        alert.escalated.by = by
         if (request.body.additionalInfo) {
             alert.escalated.additionalInfo = request.body.additionalInfo;
         }
