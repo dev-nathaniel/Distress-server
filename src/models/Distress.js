@@ -30,8 +30,8 @@ const distressSchema = new mongoose.Schema({
             status: { type: Boolean, default: false },
             by: {
                 type: {
-                    email: { type: String, default: null },
-                    phoneNumber: { type: String, default: null }
+                    email: { type: String },
+                    phoneNumber: { type: String }
                 },
                 default: { email: null, phoneNumber: null }
             },
