@@ -54,7 +54,7 @@ Escalate distress to admin: https://distress.netlify.app?id=${distressAlert._id}
         });
 
         // Wait for all SMS messages to be sent
-        await Promise.all(sendMessages);
+        // await Promise.all(sendMessages);
 
         response.status(201).json(newAlert);
     } catch (error) {
