@@ -182,6 +182,11 @@ router.post('/escalate/:id', async (request, response) => {
 
         if (!alert) return response.status(404).json({ message: "Distress alert not found" });
 
+        // Check if the distress alert has already been escalated
+        if (alert.escalated.status) {
+            return response.status(404).json({ message: "Distress alert has already been escalated" });
+        }
+
         // Prepare escalation details
         const by = {
             email,
