@@ -8,26 +8,30 @@ import mqtt from "mqtt";
 import dotenv from 'dotenv';
 import { createServer } from 'http'
 import { Server } from "socket.io";
-import Distress from "./src/models/Distress.js"; // Corrected to use the Distress model
+import Distress from "./src/models/Distress.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import fs from 'fs'
 import lamejs from 'lamejs';
 dotenv.config();
 
-
-
+// Initialize Twilio client for SMS functionality
 export const client = new Twilio(process.env.accountSid, process.env.authToken);
+
+// [TRIAL AND ERROR] - Johnny Five IoT library integration
 // import jf from "johnny-five";
+
 import cors from 'cors'
 import { verifyTokenAndRole } from "./src/routes/users.js";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { storage } from "./firebase.js";
 
+// Initialize Express app and HTTP server
 const app = express()
 const httpServer = createServer(app)
 const io = new Server(httpServer, {})
 
+// Generate WAV header for audio recording
 function generateWavHeader(bufferLength, options = {}) {
     const {
         numChannels = 1,
@@ -72,17 +76,20 @@ function generateWavHeader(bufferLength, options = {}) {
     return buffer;
 }
 
-
+// Store audio chunks for processing
 let audioChunks = []
 
+// Socket.IO middleware for authentication
 io.use((socket, next) => {
     const token = socket.handshake.auth.token
     if (!token) return next(new Error("No Token provided"));
 
     jwt.verify(token, process.env.JWT_SECRET, (error, decoded) => {
+        // [TRIAL AND ERROR] - Debug logging
         // console.log(error)
         if (error) return next( new Error( "Failed to authenticate token" ));
         const user = {id: decoded.id,
+        // [TRIAL AND ERROR] - Debug logging
         // console.log(decoded.id, 'decoded')
         // console.log(request.userId, 'request')
         userRole: decoded.role
@@ -92,9 +99,11 @@ io.use((socket, next) => {
     });
 })
 
+// Socket.IO connection handling
 io.on('connection', (socket) => {
     console.log(socket.id, 'socket id')
     socket.on('audio', (chunk) => {
+        // [TRIAL AND ERROR] - Debug logging
         // console.log(chunk)
         if (audioChunks.length < 10) {
             audioChunks.push(Buffer.from(chunk, 'base64'))
@@ -102,10 +111,12 @@ io.on('connection', (socket) => {
             audioChunks.map((audioChunk, index) => {
                 const header = generateWavHeader(audioChunk.length)
                 const wavBuffer = Buffer.concat([header, audioChunk]);
+                // [TRIAL AND ERROR] - File writing
                 // fs.writeFileSync('output.wav', wavBuffer);
                 fs.writeFileSync(`audio-${index}.wav`, wavBuffer)
             })
         }
+        // [TRIAL AND ERROR] - Debug logging
         // console.log(audioChunks)
         socket.broadcast.emit('audio', chunk)
     })
@@ -113,6 +124,7 @@ io.on('connection', (socket) => {
     socket.on('stop', (full) => {
         const wavBuffer = Buffer.from(full, 'base64');
         console.log(wavBuffer, 'wavBuffer')
+        // [TRIAL AND ERROR] - MP3 conversion
         // const mp3Buffer = convertWavToMp3(wavBuffer);
         // console.log(mp3Buffer)
         const date = new Date();
@@ -165,9 +177,11 @@ io.on('connection', (socket) => {
     })
 })
 
+// MongoDB connection setup
 const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/distress-server';
 
 mongoose.connect(mongoURI, {
+    // [TRIAL AND ERROR] - MongoDB connection options
     // useNewUrlParser: true,
     // useUnifiedTopology: true
 }).then(() => {
@@ -176,17 +190,18 @@ mongoose.connect(mongoURI, {
     console.error('Error connecting to MongoDB:', error.message);
 });
 
-
+// Middleware setup
 app.use(express.json())
 app.use(cors())
 app.use('/api', routes)
 
 const PORT = process.env.PORT || 5000
 
+// [TRIAL AND ERROR] - Johnny Five IoT setup
 // const { Board, Led } = jf;
-
 // const board = new Board({ port: 'COM6' });
 
+// Adafruit IO MQTT setup
 const IO_USERNAME = "olowodev"
 const FEED_NAME = "deployDrone"
 
@@ -196,9 +211,10 @@ const mttqClient = mqtt.connect(mttqUrl)
 mttqClient.on("connect", () => {
     console.log('connected to adafruit')
 })
+
+// [TRIAL AND ERROR] - LED control code
 // board.on("ready", () => {
 // const led = new Led(13); // Built-in LED on pin 13
-
 // let blinkCount = 0;
 // function blink() {
 //     if (blinkCount < 10) {
@@ -210,9 +226,10 @@ mttqClient.on("connect", () => {
 //         }, 500); // 5 sec on
 //     }
 // }
-
 // blink();
 // });
+
+// Drone deployment endpoint
 app.post('/deploy', verifyTokenAndRole('admin'), async (request, response) => {
     const topic = `${IO_USERNAME}/feeds/deployDrone`;
     const message = 'Deploy Drone!';
@@ -237,40 +254,42 @@ app.post('/deploy', verifyTokenAndRole('admin'), async (request, response) => {
     });
 });
 
-app.post('/emergency', (request, response) => {
-    const { batteryLevel, location } = request.body;
-    // {"coords": {"accuracy": 5, "altitude": 79.51784883765079, "altitudeAccuracy": 30, "heading": -1, "latitude": 52.6296181498343, "longitude": -1.1209546978503624, "speed": -1}, "timestamp": 1747147173648.2593}
-    try {
-        client.messages
-            .create({
-                // 10:32 AM, Aug 25, 2024
-                // body: `Emergency! Battery level: ${batteryLevel}, Location: https://maps.google.com/?q=${location.coords.latitude},${location.coords.longitude}`,
-                body: `🔴 Distress Signal Sent by your contact Adetoun
-📍 Current Location: https://maps.google.com/?q=${location.coords.latitude},${location.coords.longitude}🗺️
-🔗 Additional Details:
-Time Sent: ${new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric', year: 'numeric' })}
-Battery Level: ${Number(batteryLevel).toFixed(0)}%
-Phone Status: Silent Mode
-If you are nearby or can assist, please contact her or the authorities immediately! 🚑🚓
-Stay safe and act quickly.
-Escalate distress to admin: `,
-                from: process.env.TWILIO_PHONE_NUMBER,
-                to: process.env.EMERGENCY_PHONE_NUMBER
-            })
-            .then(message => {
-                console.log(message.sid);
-                response.status(200).send({ msg: "Emergency message sent" });
-            })
-            .catch(error => {
-                console.error(error);
-                response.status(500).send({ msg: "Failed to send emergency message" });
-            });
-    } catch (error) {
-        console.error(error);
-        response.status(500).send({ msg: "Failed to send emergency message" });
-    }
-})
+// [TRIAL AND ERROR] - Emergency endpoint with hardcoded values
+// app.post('/emergency', (request, response) => {
+//     const { batteryLevel, location } = request.body;
+//     // {"coords": {"accuracy": 5, "altitude": 79.51784883765079, "altitudeAccuracy": 30, "heading": -1, "latitude": 52.6296181498343, "longitude": -1.1209546978503624, "speed": -1}, "timestamp": 1747147173648.2593}
+//     try {
+//         client.messages
+//             .create({
+//                 // 10:32 AM, Aug 25, 2024
+//                 // body: `Emergency! Battery level: ${batteryLevel}, Location: https://maps.google.com/?q=${location.coords.latitude},${location.coords.longitude}`,
+//                 body: `🔴 Distress Signal Sent by your contact Adetoun
+// 📍 Current Location: https://maps.google.com/?q=${location.coords.latitude},${location.coords.longitude}🗺️
+// 🔗 Additional Details:
+// Time Sent: ${new Date().toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric', year: 'numeric' })}
+// Battery Level: ${Number(batteryLevel).toFixed(0)}%
+// Phone Status: Silent Mode
+// If you are nearby or can assist, please contact her or the authorities immediately! 🚑🚓
+// Stay safe and act quickly.
+// Escalate distress to admin: `,
+//                 from: process.env.TWILIO_PHONE_NUMBER,
+//                 to: process.env.EMERGENCY_PHONE_NUMBER
+//             })
+//             .then(message => {
+//                 console.log(message.sid);
+//                 response.status(200).send({ msg: "Emergency message sent" });
+//             })
+//             .catch(error => {
+//                 console.error(error);
+//                 response.status(500).send({ msg: "Failed to send emergency message" });
+//             });
+//     } catch (error) {
+//         console.error(error);
+//         response.status(500).send({ msg: "Failed to send emergency message" });
+//     }
+// })
 
+// [TRIAL AND ERROR] - WAV to MP3 conversion function
 function convertWavToMp3(wavBuffer) {
     // Convert Buffer to ArrayBuffer
     const binary = atob(wavBuffer)
@@ -309,6 +328,7 @@ function convertWavToMp3(wavBuffer) {
     return Buffer.concat(mp3Data);
 }
 
+// [TRIAL AND ERROR] - Validation endpoints
 // app.get("/", query('filter').isString().notEmpty(), (request, response) => {
 //     const result = validationResult(request)
 //     const data = matchedData(request)
@@ -323,11 +343,12 @@ function convertWavToMp3(wavBuffer) {
 //     response.status(200).send({ msg: "Hello, World!" })
 // })
 
+// Start HTTP server
 httpServer.listen(PORT, () => {
     console.log(`Running on Port ${PORT}`)
-
 })
 
+// [TRIAL AND ERROR] - Express server startup
 // app.listen(PORT, () => {
 //     console.log(`Running on Port ${PORT}`)
 // })

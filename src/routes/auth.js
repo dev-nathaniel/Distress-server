@@ -5,7 +5,8 @@ import User from "../models/User.js";
 
 const router = Router();
 
-// Helper function to get JWT secret
+// Helper function to get JWT secret from environment variables
+// Throws an error if JWT_SECRET is not configured
 const getJwtSecret = () => {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
@@ -14,20 +15,25 @@ const getJwtSecret = () => {
     return secret;
 };
 
-// User login
+// Regular user login endpoint
+// POST /login
+// Required body: { email, password }
 router.post('/login', async (request, response) => {
     try {
         const { email, password } = request.body;
+        // Find user by email
         const user = await User.findOne({ email });
         if (!user) {
             return response.status(404).json({ message: "User not found" });
         }
 
+        // Verify password using bcrypt
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return response.status(401).json({ message: "Invalid password" });
         }
 
+        // Generate JWT token with 3-hour expiry
         const token = jwt.sign({ id: user._id, role: user.role }, getJwtSecret(), { expiresIn: '3h' });
         response.json({ id: user._id, token });
     } catch (error) {
@@ -35,24 +41,30 @@ router.post('/login', async (request, response) => {
     }
 });
 
-// Admin login
+// Admin-specific login endpoint
+// POST /admin/login
+// Required body: { email, password }
 router.post('/admin/login', async (request, response) => {
     try {
         const { email, password } = request.body;
+        // Find user by email
         const user = await User.findOne({ email });
         if (!user) {
             return response.status(404).json({ message: "User not found" });
         }
 
+        // Verify admin role
         if (user.role !== 'admin') {
             return response.status(403).json({ message: "Access denied. This is an admin-only feature." });
         }
 
+        // Verify password using bcrypt
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return response.status(401).json({ message: "Invalid password" });
         }
 
+        // Generate JWT token with 3-hour expiry
         const token = jwt.sign({ id: user._id, role: user.role }, getJwtSecret(), { expiresIn: '3h' });
         response.json({ token });
     } catch (error) {
@@ -60,15 +72,19 @@ router.post('/admin/login', async (request, response) => {
     }
 });
 
-// User registration
+// User registration endpoint
+// POST /register
+// Required body: { fullName, email, password, phoneNumber, homeAddress, role? }
 router.post('/register', async (request, response) => {
     try {
         const { fullName, email, password, phoneNumber, homeAddress, role } = request.body;
+        // Check if email is already registered
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return response.status(400).json({ message: "Email already in use" });
         }
 
+        // Hash password with bcrypt (10 rounds)
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({
             fullName,
@@ -76,11 +92,13 @@ router.post('/register', async (request, response) => {
             password: hashedPassword,
             phoneNumber,
             homeAddress,
-            role: role || 'user'
+            role: role || 'user'  // Default to 'user' role if not specified
         });
 
+        // Save new user and generate token
         const newUser = await user.save();
         const token = jwt.sign({ id: newUser._id, role: newUser.role }, getJwtSecret(), { expiresIn: '1h' });
+        // Remove sensitive data from response
         const {password: userPassword, __v, updatedAt, ...restOfUser} = newUser._doc
         response.status(201).json({ id: newUser._id, token });
     } catch (error) {
@@ -88,14 +106,18 @@ router.post('/register', async (request, response) => {
     }
 });
 
-// Endpoint to confirm if token is still valid
+// Token validation endpoint
+// GET /token/validate
+// Required header: Authorization: Bearer <token>
 router.get('/token/validate', async (request, response) => {
     try {
+        // Extract token from Authorization header
         const token = request.headers['authorization'].split(' ')[1];
         if (!token) {
             return response.status(401).json({ message: "No token provided" });
         }
 
+        // Verify token and return decoded payload if valid
         jwt.verify(token, getJwtSecret(), (error, decoded) => {
             if (error) {
                 return response.status(401).json({ message: "Invalid token" });
@@ -107,7 +129,9 @@ router.get('/token/validate', async (request, response) => {
     }
 });
 
-// Endpoint to refresh token with no expiry time
+// Token refresh endpoint
+// POST /token/refresh
+// Required body: { token }
 router.post('/token/refresh', async (request, response) => {
     try {
         const { token } = request.body;
@@ -115,11 +139,13 @@ router.post('/token/refresh', async (request, response) => {
             return response.status(401).json({ message: "No token provided" });
         }
 
+        // Verify existing token and generate new one without expiry
         jwt.verify(token, getJwtSecret(), (error, decoded) => {
             if (error) {
                 return response.status(401).json({ message: "Invalid token" });
             }
 
+            // Generate new token with same payload but no expiry
             const newToken = jwt.sign({ id: decoded.id, role: decoded.role }, getJwtSecret());
             response.json({ token: newToken });
         });
