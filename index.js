@@ -122,6 +122,9 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('audio', chunk)
     })
 
+    socket.on('test', (test) => {
+        console.log(test)
+    })
     socket.on('stop', (full) => {
         console.log('audio recording sent to backend')
         const wavBuffer = Buffer.from(full, 'base64');
