@@ -54,8 +54,8 @@ router.post('/', verifyTokenAndRole(), async (request, response) => {
 //             });
 //         });
         // Send email notifications to all emergency contacts
-        const sendEmails = user.emergencyContacts.map(contact => {
-            return sendEmail({
+        // const sendEmails = user.emergencyContacts.map(contact => {
+            await sendEmail({
                 from: "adebayoolowofoyeku@gmail.com",
                 to: "adebayoolowofoyeku@gmail.com", // Assumes each contact has an email field
                 subject: "Distress Alert Notification",
@@ -91,8 +91,8 @@ router.post('/', verifyTokenAndRole(), async (request, response) => {
                 </div>
                 `,
             });
-        });
-        await Promise.all(sendEmails);
+        // });
+        // await Promise.all(sendEmails);
 
         // Wait for all SMS messages to be sent
         // await Promise.all(sendMessages);
