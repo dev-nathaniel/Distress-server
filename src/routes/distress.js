@@ -4,6 +4,7 @@ import { verifyTokenAndRole } from './users.js'; // Reusing the middleware for a
 import { client } from "../../index.js";
 import User from "../models/User.js";
 import axios from "axios";
+import { sendEmail } from "../utils/sendEmail.js";
 
 const router = Router();
 
@@ -38,20 +39,60 @@ router.post('/', verifyTokenAndRole(), async (request, response) => {
         // const shortenedUrl = await axios.post('https://spoo.me', {url: '', alias: '', password: ''})
 
         // Send SMS notifications to all emergency contacts
-        const sendMessages = user.emergencyContacts.map(contact => {
-            return client.messages.create({
-                body: `🔴 Distress Signal Sent by your contact ${user.fullName}
-📍 Current Location: https://maps.google.com/?q=${latestLocation.coords.latitude},${latestLocation.coords.longitude}🗺️
-🔗 Additional Details:
-Time Sent: ${distressAlert.additionalDetails[0].timeAdded.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric', year: 'numeric' })}
-Battery Level: ${Number(distressAlert.additionalDetails[0].batteryLevel).toFixed(0)}%
-If you are nearby or can assist, please contact her or the authorities immediately! 🚑🚓
-Stay safe and act quickly.
-Escalate distress to admin: https://distress.netlify.app?id=${distressAlert._id}`,
-                from: process.env.TWILIO_PHONE_NUMBER,
-                to: contact.phoneNumbers[0].digits ?? contact.phoneNumbers[0].number // Use digits if available, fallback to full number
+//         const sendMessages = user.emergencyContacts.map(contact => {
+//             return client.messages.create({
+//                 body: `🔴 Distress Signal Sent by your contact ${user.fullName}
+// 📍 Current Location: https://maps.google.com/?q=${latestLocation.coords.latitude},${latestLocation.coords.longitude}🗺️
+// 🔗 Additional Details:
+// Time Sent: ${distressAlert.additionalDetails[0].timeAdded.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric', year: 'numeric' })}
+// Battery Level: ${Number(distressAlert.additionalDetails[0].batteryLevel).toFixed(0)}%
+// If you are nearby or can assist, please contact her or the authorities immediately! 🚑🚓
+// Stay safe and act quickly.
+// Escalate distress to admin: https://distress.netlify.app?id=${distressAlert._id}`,
+//                 from: process.env.TWILIO_PHONE_NUMBER,
+//                 to: contact.phoneNumbers[0].digits ?? contact.phoneNumbers[0].number // Use digits if available, fallback to full number
+//             });
+//         });
+        // Send email notifications to all emergency contacts
+        const sendEmails = user.emergencyContacts.map(contact => {
+            return sendEmail({
+                from: "adebayoolowofoyeku@gmail.com",
+                to: "adebayoolowofoyeku@gmail.com", // Assumes each contact has an email field
+                subject: "Distress Alert Notification",
+                html: `
+                <div style="background: #f4f8fb; padding: 40px 0;">
+                    <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(69,155,251,0.08); overflow: hidden;">
+                    <tr>
+                        <td style="background: #e4571b; padding: 24px 0; text-align: center;">
+                        <h1 style="color: #fff; margin: 0; font-family: Arial, sans-serif; font-size: 28px; letter-spacing: 1px;">Distress Alert</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 32px 32px 24px 32px; font-family: Arial, sans-serif; color: #222;">
+                        <h2 style="color: #e4571b; margin-top: 0; font-size: 22px;">Distress Signal Sent by ${user.fullName}</h2>
+                        <p style="font-size: 16px; color: #444;">
+                            <b>Location:</b> <a href="https://maps.google.com/?q=${latestLocation.coords.latitude},${latestLocation.coords.longitude}">View on Map</a><br>
+                            <b>Message:</b> ${distressAlert.message}<br>
+                            <b>Time Sent:</b> ${distressAlert.additionalDetails[0].timeAdded.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, month: 'short', day: 'numeric', year: 'numeric' })}<br>
+                            <b>Battery Level:</b> ${Number(distressAlert.additionalDetails[0].batteryLevel).toFixed(0)}%
+                        </p>
+                        <p style="font-size: 15px; color: #888;">
+                            If you are nearby or can assist, please contact them or the authorities immediately!<br>
+                            Escalate distress to admin: <a href="https://distress.netlify.app?id=${distressAlert._id}">Escalate Now</a>
+                        </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background: #f4f8fb; text-align: center; padding: 16px 0; font-size: 13px; color: #aaa;">
+                        &copy; ${new Date().getFullYear()} Distress App. All rights reserved.
+                        </td>
+                    </tr>
+                    </table>
+                </div>
+                `,
             });
         });
+        await Promise.all(sendEmails);
 
         // Wait for all SMS messages to be sent
         // await Promise.all(sendMessages);

@@ -13,6 +13,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import fs from 'fs'
 import lamejs from 'lamejs';
+import nodemailer from 'nodemailer'
 dotenv.config();
 
 // Initialize Twilio client for SMS functionality
@@ -289,6 +290,18 @@ app.post('/deploy', verifyTokenAndRole('admin'), async (request, response) => {
 //     }
 // })
 
+export const transporter = nodemailer.createTransport({
+    // Configure your SMTP settings here
+    // host: process.env.SMTP_HOST,
+    // port: Number(process.env.SMTP_PORT) || 587,
+    // secure: false,
+    service: 'gmail',
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
+
 // [TRIAL AND ERROR] - WAV to MP3 conversion function
 function convertWavToMp3(wavBuffer) {
     // Convert Buffer to ArrayBuffer
@@ -352,3 +365,11 @@ httpServer.listen(PORT, () => {
 // app.listen(PORT, () => {
 //     console.log(`Running on Port ${PORT}`)
 // })
+
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('SMTP configuration error:', error);
+    } else {
+        console.log('SMTP configuration is valid, ready to send emails.');
+    }
+});
