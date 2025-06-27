@@ -123,6 +123,7 @@ io.on('connection', (socket) => {
     })
 
     socket.on('stop', (full) => {
+        console.log('audio recording sent to backend')
         const wavBuffer = Buffer.from(full, 'base64');
         console.log(wavBuffer, 'wavBuffer')
         // [TRIAL AND ERROR] - MP3 conversion
